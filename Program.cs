@@ -6,22 +6,22 @@ namespace bloggen
 {
     class Program
     {
+      
 
 
         /* ***************************************************************************
-         * Kontrollerar värden från användaren. 
+         * KONTROLL AV INPUT
          * Tar användarens sträng. Retunerar en bool som indikerar ifall 
          * valideringen lyckats. 
          *****************************************************************************/
         static bool inputKontrollMetod(string input)
-        {            
-                    if (input.Length <= 0)
-                     {  
-                        Console.Write("\n\tFelaktigt värde.");
-                        return false;
-                        
-                     }
-                    return true;
+        {
+            if (input.Length <= 0)
+            {
+                Console.Write("\n\tFelaktigt värde.");
+                return false;
+            }
+            return true;
         }
 
 
@@ -39,6 +39,7 @@ namespace bloggen
                               "\n\t[3]Gå tillbaka");
 
             int index; // Input av index till radering och redigering. 
+            bool sucsess; // För att kontrollera konvertering från sträng till int. 
             Int32.TryParse(Console.ReadLine(), out int underMeny); // input från menyn. 
 
 
@@ -46,54 +47,104 @@ namespace bloggen
             {
                 // Redigera
                 case 1:
+
                     // Ber användaren om input och sparar det i index variabeln. 
                     Console.WriteLine("\n\tVälj index att redigera:");
-                    Int32.TryParse(Console.ReadLine(), out index);
+                    sucsess = Int32.TryParse(Console.ReadLine(), out index);
 
-                    // Kontrollerar så att indexet finns för att förhindra körtidsfel. 
-                    if(bloggen.Count > index)
+                    // Kontrollerar så det gick att konvertera från string till int.
+                    if (sucsess)
                     {
-                        //Visa inlägget som ska redigeras. 
-                        Console.WriteLine("\tRedigera inlägg:\n\t" + bloggen[index][1] + "\n\t" + bloggen[index][2]);
+                        // Kontrollerar så att indexet finns för att förhindra körtidsfel. 
+                        if (bloggen.Count > index)
+                        {
+                            //Visa inlägget som ska redigeras. 
+                            Console.WriteLine("\tRedigera inlägg:\n\t" + bloggen[index][1] + "\n\t" + bloggen[index][2]);
 
-                        //Titel
-                        Console.WriteLine("\n\tAnge ny titel:");
-                        bloggen[index][1] = Console.ReadLine();
+                            bool inputKontroll = false; // Skapar boolen som krävs för kontrollen. 
 
-                        //Text
-                        Console.WriteLine("\n\tAnge text:");
-                        bloggen[index][2] = Console.ReadLine();
+                            //Titel
+                            while (!inputKontroll)
+                            {
+                                Console.WriteLine("\n\tAnge ny titel:");
+                                string input = Console.ReadLine();
 
-                        // Meddelande till användaren... 
-                        Console.WriteLine("\n\tInlägg ändrat!");
+                                inputKontroll = inputKontrollMetod(input);// Anropat metoden för att validera inputen. 
+                                if (inputKontroll)
+                                {
+                                    bloggen[index][1] = input;
+                                }
+                            }
 
-                        return false; // När inlägget är redigerat så slutar vi visa menyn. 
+                            inputKontroll = false; // Nollställer kontrollen.
+                            
+                            /* Skapar en ny vektor. För att vara konsekvent i koden skapar jag den med 3, även om jag bara använder ett element.
+                             * Eftersom metoden som formaterar inputen kräver vektor som argument behöver jag spara texten i vektorn. 
+                             */
+                            string[] addToBlogg = new string[3]; 
+
+                            // text
+                            while (!inputKontroll)
+                            {
+                                Console.WriteLine("\n\tAnge ny text till inlägget:");
+                                string input = Console.ReadLine();
+
+                                inputKontroll = inputKontrollMetod(input);// Anropat metoden för att validera inputen. 
+                                if (inputKontroll)
+                                {
+
+                                    formateraInlägg(bloggen, addToBlogg, input); // Anropar metoden för att formatera bloggtexten. 
+                                    bloggen[index][2] = addToBlogg[2];
+                                }
+                            }
+
+                            Console.Clear(); // Tömmer skärmen för lättare läsning.                            
+                            Console.WriteLine("\n\tInlägg ändrat!");// Meddelande till användaren... 
+
+                            return false; // När inlägget är redigerat så slutar vi visa menyn. 
+                        }
+                        else
+                        {
+                            Console.WriteLine("\n\tFelaktigt värde!");
+                        }
                     }
                     return true;
-                    
-                
+
+
                 // Radera
                 case 2:
                     // Ber användaren om input och sparar det i index variabeln. 
                     Console.WriteLine("\n\tVälj index att radera:");
-                    Int32.TryParse(Console.ReadLine(), out index);
+                    sucsess = Int32.TryParse(Console.ReadLine(), out index);
 
-                    // Kontrollpunkt - möjlighet att avbryta raderingen. 
-                    Console.WriteLine("\n\tSka inlägget verkligen avbrytas?\n\tange y för att fortsätta."); 
-                    if(Console.ReadLine().ToLower() == "y")
+                    if (sucsess)
                     {
-                        // om y väljs tömmer vi skärmen, kallar på metoden för att radera, ger användaren ett meddelande och avslutar undermenyn.
-                        Console.Clear();
-                        bloggen.RemoveAt(index);
-                        Console.WriteLine("\n\tInlägget borttaget!");
-                        return false; 
+                        // Kollar så att det index vi försöker radera finns. 
+                        if (bloggen.Count > index)
+                        {
+                            // Kontrollpunkt - möjlighet att avbryta raderingen. 
+                            Console.WriteLine("\n\tSka inlägget verkligen avbrytas?\n\tange y för att fortsätta.");
+                            if (Console.ReadLine().ToLower() == "y")
+                            {
+                                // om y väljs tömmer vi skärmen, kallar på metoden för att radera, ger användaren ett meddelande och avslutar undermenyn.
+                                Console.Clear();
+                                bloggen.RemoveAt(index);
+                                Console.WriteLine("\n\tInlägget borttaget!");
+                                return false;
+                            }
+                            else
+                            {
+                                Console.WriteLine("\n\tAvbrytet av anvädare!");
+                                return true; // fortsätter visa menyn, användaren kanske klickade fel och skulle radera istället för redigera. Då är det fint om vi är i menyn. 
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("\n\tFelaktigt värde!");
+                        }
                     }
-                    else
-                    {
-                        Console.WriteLine("\n\tAvbrytet av anvädare!");
-                        return true; // fortsätter visa menyn, användaren kanske klickade fel och skulle radera istället för redigera. Då är det fint om vi är i menyn. 
-                    }
-           
+                    return true;
+
                 // Avbryt
                 case 3:
                     Console.Clear();
@@ -104,6 +155,42 @@ namespace bloggen
             }
         }
 
+        /* ***************************************************************************
+         * FORMATERA BLOGGTEXTEN 
+         * Tar emot bloggen, vektorn och texten från användaren. 
+         *****************************************************************************/
+        static void formateraInlägg(List<string[]> bloggen, string[] addToBlogg, string input)
+        {
+
+            string nyttInlägg = ""; // Placeholder för den formaterade strängen.
+            int rad = 1; // Vilken rad vi är på. 
+            int maxRadLängd = 40; // Max antal tecken, ink. mellanslag. 
+
+            // Loopar igenom inputsträngen och adderar ett radbryte för att det ska bli lättare att läsa på skärmen. 
+            for (int i = 0; i < input.Length; i++)
+            {
+                if (nyttInlägg.Length > rad * maxRadLängd) // först kollar vi ifall radlängden har uppnåtts. 
+                {
+                    // Kollar ifall nuvarande tecken är ett mellanslag, i så fall gör vi ett radbryte. 
+                    if (char.IsWhiteSpace(input[i]))
+                    {
+                        nyttInlägg += "\n\t";
+                        rad++;
+                    }
+                    // Ifall nuvarande tecken inte är ett mellanslag fortsätter vi bygga strängen utan mellanslag. 
+                    else
+                    {
+                        nyttInlägg += input[i];
+                    }
+                }
+                else // Har radlängden inte uppnåts fortsätter vi bygga strängen. 
+                {
+                    nyttInlägg += input[i];
+                }
+            }
+            addToBlogg[2] = nyttInlägg; // adderar det nya inlägget till 
+        }
+
 
         /* ***************************************************************************
          * UTSKRIFT AV INLÄGG. 
@@ -111,16 +198,22 @@ namespace bloggen
          *****************************************************************************/
         static void listaInlägg(List<string[]> bloggen)
         {
-            Console.WriteLine("\tHär är alla blogginläggen:");
+            if(bloggen.Count > 0) { 
+            Console.WriteLine("\n\tHär är alla blogginläggen:\n");
             // Loopar igenom alla inlägg och presenterar dem. 
-            foreach (string[] element in bloggen)
+                foreach (string[] element in bloggen)
+                {                    
+                    Console.Write("\t" + element[1] + "(" + element[0] + ")\n");
+                    Console.WriteLine("\t************************************************");
+                    Console.WriteLine("\t"+ element[2]); // Skriver ut den formaterade strängen.               
+                    Console.WriteLine("\t************************************************\n");
+                }
+            }
+            else
             {
-                Console.WriteLine("\t******************************************");
-                Console.Write("\t" + element[1] + "(" + element[0] + ")\n\t" + element[2] + "\n");
-                Console.WriteLine("\t******************************************");
+                Console.WriteLine("\n\tBloggan har inga inlägg ännu.\n");
             }
         }
-
 
         /* ***************************************************************************
          * SORTERING    
@@ -168,21 +261,27 @@ namespace bloggen
          *****************************************************************************/
         static bool SökTitel(List<string[]> bloggen, string sökVärde)
         {
+            Console.Clear();
             bool hittat = false;
 
-            Console.WriteLine("\n\tSök resultat:");
+            Console.WriteLine("\n\tResultat:");
 
-            // Eftersom jag behöver ha indexet till att redigera eller radera ett inlägg kör vi en for loop istället för foreach. 
+            // Valde en for loop då jag tycker det är smidigare när man jobbar med Index, men skulle kunnat använda en foreach där i variabeln definerats utanför loopen. 
+            // Hade gärna tagit feedback på vilken som är mer "rätt" att använda.
             for (int i = 0; i < bloggen.Count; i++)
             {
+                // Skriver ut resultatet av sökningen. Formaterar dess index med gul färg för att lättare kunna hitta det. 
                 if (bloggen[i][1].ToLower() == sökVärde.ToLower())
                 {
-                    Console.WriteLine("\tIndex:" + i + " Datum:" + bloggen[i][0] + "Titel:" + bloggen[i][1] + "Inlägg:" + bloggen[i][2]);
+                    Console.Write("\n\tIndex:");
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.Write(i);
+                    Console.ForegroundColor = ConsoleColor.Gray;
+                    Console.WriteLine("\n\tDatum:" + bloggen[i][0] + "\n\tTitel:" + bloggen[i][1] + "\n\tInlägg: \n\t" + bloggen[i][2]);
                     hittat = true;
-
                 }
             }
-
+            
             // Om boolen inte har satts till sann så vet vi att inget hittats så vi skriver ut ett meddelande till användaren. 
             if (!hittat)
             {
@@ -195,20 +294,23 @@ namespace bloggen
 
         /* ***************************************************************************
          * BINÄR SÖKNING AV TITELENS FÖRSTA BOKSTAV
-         * Tar emot listan och ett sökvärde, Skriver ut första träffen av den sorterade 
+         * Tar emot listan(sorterad) och ett sökvärde, Skriver ut första träffen av den sorterade 
          * listan. En bool retuneras för att hålla koll på ifall vi fick sökträff, 
          * för att veta om vi ska ladda en ny meny. 
          *****************************************************************************/
         static bool binärSökTitel(List<string[]> bloggen, string sökvärde)
         {
+            Console.Clear();
             bool hittat = false;
             int första = 0; // första elementet. 
             int sista = bloggen.Count - 1; // sista elementet. 
 
+            Console.WriteLine("\n\tResultat:\n");
+
             while (första <= sista)  // loopar igenom listan så länge först är mindre eller likamed sista. 
             {
-                int mellan = (första + sista) / 2; // Mellan. "första" + "sista" delat med 2. 
-                int tmp = sökvärde[0].CompareTo(bloggen[mellan][1][0]); // Hämtar ut första bokstaven i <sökvärde> och jämför mot första bokstaven i andra elementet <mitten>. 
+                int mellan = (första + sista) / 2; // Mellan. "första" + "sista" delat med 2.                
+                int tmp = sökvärde.ToLower()[0].CompareTo(bloggen[mellan][1].ToLower()[0]); // Hämtar ut första bokstaven i <sökvärde> och jämför mot första bokstaven i andra elementet <mitten>. 
 
                 //  OM sökvärde är större än siffra på indexplats "mellan" i bloggen. "första" får värdet av "mellan" + 1
                 if (tmp > 0)
@@ -221,13 +323,16 @@ namespace bloggen
                 {
                     sista = mellan - 1;
                 }
-                // Skriv ut att siffran de sökt på finns på element "mellan" i bloggen.
+                // Skriver ut resultatet av sökningen. Formaterar dess index med gul färg för att lättare kunna hitta det. 
                 else
-                {
-                    Console.WriteLine("\n\tSökvärdet: " + sökvärde[0] + " finns på element: " + mellan + ".");
+                {                    
+                    Console.Write("\n\tIndex:");
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.Write(mellan);
+                    Console.ForegroundColor = ConsoleColor.Gray;
+                    Console.WriteLine("\n\tDatum:" + bloggen[mellan][0] + "\n\tTitel:" + bloggen[mellan][1] + "\n\tInlägg: \n\t" + bloggen[mellan][2]);
                     hittat = true; // Sökresultat hittat. 
                     return hittat;
-                    
                 }
             }
 
@@ -237,9 +342,8 @@ namespace bloggen
                 Console.WriteLine("\n\tSökvärdet: " + sökvärde + " hittades inte. Sökningen misslyckades.");
                 hittat = false; // sätter boolen till falskt då inget hittades. 
             }
-
             return hittat;
-         }
+        }
 
 
         static void Main(string[] args)
@@ -249,8 +353,7 @@ namespace bloggen
             bool ärSorterad = false; // Håller koll på ifall listan är sorterad. 
 
             List<string[]> bloggen = new List<string[]>();  // Listan som håller alla blogginlägg. 
-            List<string[]> dummy = new List<string[]>(); // En dummy lista som kan användas för att skicka till metoden inputKontrollMetod. 
-
+            
             // Laddar menyn. 
             while (visaMeny)
             {
@@ -283,8 +386,6 @@ namespace bloggen
                         // Adderar datum samt värde från användaren. 
                         addToBlogg[0] = date;
 
-
-                        
                         inputKontroll = false; // Sätter inputKontroll till falsk så vi vet att inputet inte klarat valideringen. 
 
                         while (!inputKontroll)
@@ -299,10 +400,11 @@ namespace bloggen
                             if (inputKontroll)
                             {
                                 addToBlogg[1] = input;
-                            }                            
+                                Console.Clear();
+                            }
                         }
 
-                        
+
                         inputKontroll = false; // Sätter inputKontroll till falsk så vi vet att inputet inte klarat valideringen. 
 
                         // Gör en kontroll mot tomt inlägg. 
@@ -313,28 +415,27 @@ namespace bloggen
                             string input = Console.ReadLine();
 
                             inputKontroll = inputKontrollMetod(input); // Anropat metoden för att validera inputen. 
-                            
-                            // Om valideringen klaras, adderar vi det till bloggen.
+
+                            // Om valideringen klaras, adderar vi det till vektorn. 
                             if (inputKontroll)
                             {
-                                addToBlogg[2] = input;
+                                formateraInlägg(bloggen, addToBlogg, input); // Anropar metoden för att formatera bloggtexten. 
+                                Console.Clear();
                             }
+                        }
 
-                        }                                                                      
-                        
+                        bloggen.Add(addToBlogg); // adderar hela vekorn till bloggen. 
 
-                        bloggen.Add(addToBlogg); // Anropar metoden som adderat ett inlägg i bloggen, tar vektorn som parameter.  
-
-                        Console.WriteLine("\tInlägget sparat!\n");
+                        Console.WriteLine("\n\tInlägget sparat!\n");
 
                         break;
 
                     // Linjär sökning.
-                    case 3:                        
+                    case 3:
                         Console.Clear();
                         if (bloggen.Count > 0) // Kontrollerar så där finns något i listan. 
                         {
-                            
+
                             inputKontroll = false; // Sätter inputKontroll till falsk så vi vet att inputet inte klarat valideringen. 
 
                             // Gör en kontroll mot sökningen. 
@@ -346,10 +447,10 @@ namespace bloggen
 
                                 inputKontroll = inputKontrollMetod(sökVärde); // Anropat metoden för att validera inputen. 
 
-                                // Om valideringen klaras, adderar vi det till bloggen.
+                                // Om valideringen klaras, söker vi i bloggen
                                 if (inputKontroll)
                                 {
-                                    // Anropar metoden för sökning. Tar bloggen och sökvärde från användaren som parameter. Om true retuneras laddar vi menyn. 
+                                    // Anropar metoden för sökning. Tar bloggen och sökvärde från användaren som argument. Om true retuneras laddar vi menyn. 
                                     if (SökTitel(bloggen, sökVärde))
                                     {
                                         visaUnderMeny = true; // menyn ska visas. 
@@ -359,7 +460,6 @@ namespace bloggen
                                         }
                                     }
                                 }
-
                             }
                         }
                         else
@@ -368,44 +468,51 @@ namespace bloggen
                         }
 
                         break;
-                    
+
                     // Binär sökning
                     case 4:
                         Console.Clear();
                         if (bloggen.Count > 0) // Kontrollerar så där finns något i listan. 
                         {
                             // Om listan inte är sorterad så sorterar vi den, ett krav för att den binära sökningen ska kunna genomföras.
-                            if (!ärSorterad) sorteraBloggen(bloggen); 
+                            if (!ärSorterad) sorteraBloggen(bloggen);
+                            
+                            inputKontroll = false; // Sätter inputKontroll till falsk så vi vet att inputet inte klarat valideringen. 
 
-                            // Ber användaren om sökvärde.
-                            Console.WriteLine("\tAnge första bokstaven i titeln du vill söka efter:");
-                            string sökVärde = Console.ReadLine();
+                            // Gör en kontroll mot sökningen. 
+                            while (!inputKontroll)
+                            {
+                                // Ber användaren om sökvärde.
+                                Console.WriteLine("\tAnge första bokstaven i titeln du vill söka efter:");
+                                string sökVärde = Console.ReadLine();
 
-                            // Kontrollerar så där finns något att söka efter, så inte användaren bara tryckte "Enter".
-                            if (sökVärde.Length <= 0)
-                            {
-                                Console.WriteLine("\n\tDu måste ange ett värde att söka efter"); // Vid binär sökning måste vi ha ett värde med oss in. 
-                            }
-                            else
-                            {
-                                // Anropar metoden för sökning. Tar bloggen och sökvärde från användaren som parameter. Om true retuneras laddar vi menyn. 
-                                if (binärSökTitel(bloggen, sökVärde))
+                                inputKontroll = inputKontrollMetod(sökVärde); // Anropat metoden för att validera inputen. 
+
+                                // Om valideringen inte klaras, utför vi sökningen.
+                                if (inputKontroll)
                                 {
-                                    visaUnderMeny = true; // menyn ska visas. 
-                                    while (visaUnderMeny)
+                                    // Anropar metoden för sökning. Tar bloggen och sökvärde från användaren som argument. Om true retuneras laddar vi menyn. 
+                                    if (binärSökTitel(bloggen, sökVärde))
                                     {
-                                        visaUnderMeny = underMeny(bloggen); // Anropar undermenyn. underMeny() retunerar en bool, så vi kan avbryta menyn vid behov.
-                                    }
+                                        visaUnderMeny = true; // menyn ska visas. 
+                                        while (visaUnderMeny)
+                                        {
+                                            visaUnderMeny = underMeny(bloggen); // Anropar undermenyn. underMeny() retunerar en bool, så vi kan avbryta menyn vid behov.
+                                        }
+                                    }                                    
+                                }
+                                else
+                                {
+                                    Console.WriteLine("\n\tDu måste ange ett värde att söka efter"); // Vid binär sökning måste vi ha ett värde med oss in. 
                                 }
                             }
-                                                  
                         }
                         else
                         {
                             Console.WriteLine("\n\tBloggan har inga inlägg ännu.\n"); // Om där inte finns några inlägg visar vi detta meddelandet till användaren. 
                         }
                         break;
-                    
+
                     // avslutar programmet
                     case 5:
                         visaMeny = false;
